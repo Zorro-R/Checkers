@@ -31,15 +31,37 @@ def setup_board(board):
         board[6][1 + 2*i] = Piece((1 + 2*i, 6))
 
 
+def display_board(board):
+    """
+    Takes a board object and displays the current game state 
+    in the commandline.
+    Args:
+    board -> List(Piece, Int)
+    Returns:
+    None
+    """
+    for row in board:
+        for item in row:
+            if item == 0:
+                print("| |", end="")
+            else:
+                if item.isWhite:
+                    print("|X|", end="")
+                else:
+                    print("|O|", end="")
+        print()
+
+
 def main():
     # A 2d array to store the pieces
     board = [[0 for _ in range(8)] for _ in range(8)]
     # Populate the board with piece objects - 0 indicates an empty field
     setup_board(board)
+    display_board(board)
     board[4][1] = Piece((1, 4), False)
     # print(board)
-    print(board[5][0])
-    print(board[5][0].legal_moves(board))
+    # print(board[5][0])
+    # print(board[5][0].legal_moves(board))
 
 
 """
