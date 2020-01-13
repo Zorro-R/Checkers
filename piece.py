@@ -15,19 +15,19 @@ def pos_on_board(pos):
 
 
 class Piece:
-    def __init__(self, pos, isWhite=True):
+    def __init__(self, pos, white=True):
         self.x, self.y = pos
-        self.isWhite = isWhite
-        self.isCrowned = False
+        self.white = white
+        self.crowned = False
 
     def __repr__(self):
-        return f"Piece({(self.x, self.y)}, {self.isWhite})"
+        return f"Piece({(self.x, self.y)}, {self.white})"
 
     def __str__(self):
-        if self.isWhite:
-            return f"{(self.x, self.y)}, white, isCrowned: {self.isCrowned}"
+        if self.white:
+            return f"{(self.x, self.y)}, white, crowned: {self.crowned}"
         else:
-            return f"{(self.x, self.y)}, black, isCrowned: {self.isCrowned}"
+            return f"{(self.x, self.y)}, black, crowned: {self.crowned}"
 
     def potential_moves(self, board):
         """
@@ -40,7 +40,8 @@ class Piece:
         Args:
         board -> List[Piece]
         Returns:
-        Tuple(Bool, List[Tuple(x,y)])
+        Tuple(Bool, List[Tuple(x,y)]) if any moves can be made
+        else None
         """
 
         # A list to store single square moves
@@ -49,9 +50,9 @@ class Piece:
         double_square_moves = []
 
         # A list of vectors to add to the pieces current position to move it
-        if not self.isCrowned:
+        if not self.crowned:
             # Control which way the piece can move when it is not crowned
-            if self.isWhite:
+            if self.white:
                 direction = -1
             else:
                 direction = 1
@@ -75,12 +76,35 @@ class Piece:
                 # Otherwise check if the square behind the occupied one is on the board
                 elif pos_on_board((new_x2, new_y2)):
                     # If so check that it is free and that the piece being jumped over is opposite colored
-                    if board[new_y2][new_x2] == 0 and board[new_y1][new_x1].isWhite != self.isWhite:
+                    if board[new_y2][new_x2] == 0 and board[new_y1][new_x1].white != self.white:
                         double_square_moves.append((new_x2, new_y2))
 
         # If there are capturing moves, only return these. Otherwise return single square moves.
         # The True / False in the tuple indicates whether a capturing move can be made or not.
         if len(double_square_moves) > 0:
             return (True, double_square_moves)
+        # Return None if the piece cannot make any moves
+        elif len(single_square_moves) == 0:
+            return None
         else:
             return (False, single_square_moves)
+
+    def update(self, pos):
+        """
+        Updates the position of a piece and also checks if the piece
+        is promoted to a king.
+        Args:
+        pos -> Tuple(x, y)
+        Returns:
+        True if Piece was crowned
+        else False        
+        """
+        self.x, self.y = pos
+        if self.white and self.y == 0:
+            self.crowned = True
+            return True
+        elif self.y == 7:
+            self.crowned = True
+            return True
+        else:
+            return False
