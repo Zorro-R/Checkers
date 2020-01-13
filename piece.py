@@ -29,15 +29,18 @@ class Piece:
         else:
             return f"{(self.x, self.y)}, black, isCrowned: {self.isCrowned}"
 
-    def legal_moves(self, board):
+    def potential_moves(self, board):
         """
-        Takes a board object containing all pieces and returns the legal
-        moves that the piece can make given the board configuration.
+        Takes a board object containing all pieces and returns the potential
+        moves that the piece can make given the board configuration but
+        ignoring whether other pieces may be forced to make capturing moves.
+        First element of the returning tuple indicates whether a capturing
+        move can be made or not.
 
         Args:
         board -> List[Piece]
         Returns:
-        List[Tuple(x,y)]
+        Tuple(Bool, List[Tuple(x,y)])
         """
 
         # A list to store single square moves
@@ -75,8 +78,9 @@ class Piece:
                     if board[new_y2][new_x2] == 0 and board[new_y1][new_x1].isWhite != self.isWhite:
                         double_square_moves.append((new_x2, new_y2))
 
-        # If there are capturing moves, only return these. Otherwise return single square moves
+        # If there are capturing moves, only return these. Otherwise return single square moves.
+        # The True / False in the tuple indicates whether a capturing move can be made or not.
         if len(double_square_moves) > 0:
-            return double_square_moves
+            return (True, double_square_moves)
         else:
-            return single_square_moves
+            return (False, single_square_moves)
