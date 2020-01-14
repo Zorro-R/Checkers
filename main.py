@@ -69,7 +69,7 @@ def get_moves(board, white_turn, capturing_piece=None):
     white_turn -> Bool
     capturing_piece -> Piece, None
     Returns:
-    legal_moves -> List[Tuple(Tuple, List[Tuple])]
+    legal_moves -> List[Tuple(Tuple, Bool, List[Tuple])]
     """
 
     # If no capturing move was made
@@ -126,10 +126,6 @@ def player_input(moves):
     selected_move = int(input(
         f"Select a move by typing a number between 0 and {len(moves[selected_piece][2]) - 1}: "))
     return (selected_piece, selected_move)
-
-
-def move(board, pos, new_pos, made_capture):
-    return None
 
 
 # # board for testing double capture scenarios
