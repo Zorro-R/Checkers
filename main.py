@@ -45,10 +45,16 @@ def display_board(board):
             if item == 0:
                 print("| |", end="")
             else:
-                if item.white:
-                    print("|X|", end="")
+                if item.crowned:
+                    if item.white:
+                        print("|X^|", end="")
+                    else:
+                        print("|O^|", end="")
                 else:
-                    print("|O|", end="")
+                    if item.white:
+                        print("|X|", end="")
+                    else:
+                        print("|O|", end="")
         print()
 
 
