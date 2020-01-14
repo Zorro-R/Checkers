@@ -47,9 +47,9 @@ def display_board(board):
             else:
                 if item.crowned:
                     if item.white:
-                        print("|X^|", end="")
+                        print("|X^", end="")
                     else:
-                        print("|O^|", end="")
+                        print("|O^", end="")
                 else:
                     if item.white:
                         print("|X|", end="")
@@ -58,28 +58,35 @@ def display_board(board):
         print()
 
 
-def get_moves(board, white_turn):
+def get_moves(board, white_turn, capturing_piece=None):
     """
     Takes a board object and a boolean representing which players turn it is
     and returns a list of tuples representing what legal moves can be made
-    given the gamestate.
+    given the gamestate. It can be fed a capturing_piece object in order to 
+    return only the moves of that piece.
     Args:
     board -> List[Piece, Int]
     white_turn -> Bool
+    capturing_piece -> Piece, None
     Returns:
     legal_moves -> List[Tuple(Tuple, List[Tuple])]
     """
 
-    # Get all pieces and flatten to a 1d list
-    all_pieces = [piece for row in [[item for item in row if isinstance(
-        item, Piece)] for row in board] for piece in row]
+    # If no capturing move was made
+    if capturing_piece == None:
+        # Get all pieces and flatten to a 1d list
+        all_pieces = [piece for row in [[item for item in row if isinstance(
+            item, Piece)] for row in board] for piece in row]
 
-    if white_turn:
-        # Get white pieces
-        pieces = [piece for piece in all_pieces if piece.white]
+        if white_turn:
+            # Get white pieces
+            pieces = [piece for piece in all_pieces if piece.white]
+        else:
+            # Get black pieces
+            pieces = [piece for piece in all_pieces if not piece.white]
+
     else:
-        # Get black pieces
-        pieces = [piece for piece in all_pieces if not piece.white]
+        pieces = [capturing_piece]
 
     move_info = []
     # Check for possible moves for pieces of a given color
@@ -91,12 +98,12 @@ def get_moves(board, white_turn):
 
     # Only count capturing moves as legal moves if such capturing moves exist.
     capturing_moves = [(info[0], info[1][0], info[1][1])
-                       for info in move_info if info[1][0] == True]
+                    for info in move_info if info[1][0] == True]
     if len(capturing_moves) > 0:
         legal_moves = capturing_moves
     else:
         legal_moves = [(info[0], info[1][0], info[1][1])
-                       for info in move_info if info[1][0] == False]
+                    for info in move_info if info[1][0] == False]
 
     return legal_moves
 
@@ -125,31 +132,32 @@ def move(board, pos, new_pos, made_capture):
     return None
 
 
-# board for testing double capture scenarios
-test_board1 = [[0 for _ in range(8)] for _ in range(8)]
-test_board1[0][7] = Piece((7, 0), False)
-test_board1[1][2] = Piece((2, 1), False)
-test_board1[1][6] = Piece((6, 1), False)
-test_board1[2][5] = Piece((5, 2))
-test_board1[3][4] = Piece((4, 3))
-test_board1[4][3] = Piece((3, 4))
-test_board1[6][3] = Piece((3, 6))
+# # board for testing double capture scenarios
+# test_board1 = [[0 for _ in range(8)] for _ in range(8)]
+# test_board1[0][7] = Piece((7, 0), False)
+# test_board1[1][2] = Piece((2, 1), False)
+# test_board1[1][6] = Piece((6, 1), False)
+# test_board1[2][5] = Piece((5, 2))
+# test_board1[3][4] = Piece((4, 3))
+# test_board1[4][3] = Piece((3, 4))
+# test_board1[6][3] = Piece((3, 6))
 
 
 def main():
-    # # A 2d array to store the pieces
-    # board = [[0 for _ in range(8)] for _ in range(8)]
-    # # Populate the board with piece objects - 0 indicates an empty field
-    # setup_board(board)
+    # A 2d array to store the pieces
+    board = [[0 for _ in range(8)] for _ in range(8)]
+    # Populate the board with piece objects - 0 indicates an empty field
+    setup_board(board)
 
-    board = test_board1
+    # board = test_board1 - uncomment to test double capture scenarios
 
     game_over = False
     white_turn = True
 
     # Game loop
     while not game_over:
-
+        
+        capturing_piece = None
         turn_ongoing = True
         while turn_ongoing:
             display_board(board)
@@ -159,7 +167,7 @@ def main():
                 print("Black to play")
 
             # Get moves given game state and turn
-            moves = get_moves(board, white_turn)
+            moves = get_moves(board, white_turn, capturing_piece)
 
             # Get player input
             selected_piece, selected_move = player_input(moves)
@@ -181,15 +189,14 @@ def main():
                 captured_x, captured_y = x + int(dx / 2), y + int(dy / 2)
                 board[captured_y][captured_x] = 0
 
+                # Set it as the capturing_piece to be used as an argument for the potential_moves() function.
+                capturing_piece = piece
+               
                 # If piece can still move
                 if piece.potential_moves(board) != None:
-                    can_capture, piece_moves = piece.potential_moves(board)
+                    can_capture, _ = piece.potential_moves(board)
                     # If it cannot make any more captures end the turn
                     if not can_capture:
-                        # FIX: In a scenario where one piece can make a double capture and another a single and
-                        # the player selects the double capture, this won't ensure that the double capture occurs.
-                        # we must ensure that upon a capture only the possible moves of the piece which captures are
-                        # checked. This can be illustrated with the test board
                         turn_ongoing = False
                 # If no subsequent captures can be made with the piece end the players turn
                 else:
@@ -197,7 +204,6 @@ def main():
             else:
                 turn_ongoing = False
         white_turn = not white_turn
-
 
 if __name__ == "__main__":
     main()
