@@ -1,5 +1,7 @@
 import numpy as np
-from main import get_moves
+import copy
+from main import get_moves, display_board
+from piece import Piece
 
 
 def static_evaluation(board):
@@ -14,130 +16,55 @@ def static_evaluation(board):
                     evaluation -= 1
 
 
-def minimax(board, white_turn, depth):
+# def minimax(board, white_turn, depth):
 
-    # Base case - depth is 0
-    if depth == 0:
-        return static_evaluation(board)
+#     # Base case - depth is 0
+#     if depth == 0:
+#         return static_evaluation(board)
 
-    # Get possible moves
-    else:
-        if white_turn:
-            moves = get_moves(board, white_turn, capturing_piece)
-            for move in moves:
-                # Simulate move to get new board position
-                # Then evaluate new board position
-                # Return move leading to max gain
-                #[minimax(board, white_turn, depth)]
-            # max(minimax(board))
 
-#def simulate_move(board, moves, white_turn, selected_piece, simulate_move):
-    
+# board for testing double capture scenarios
+test_board1 = [[0 for _ in range(8)] for _ in range(8)]
+test_board1[0][7] = Piece((7, 0), False)
+test_board1[1][2] = Piece((2, 1), False)
+test_board1[1][6] = Piece((6, 1), False)
+test_board1[2][1] = Piece((1, 2))
+test_board1[2][5] = Piece((5, 2))
+test_board1[4][5] = Piece((5, 4))
+test_board1[2][3] = Piece((3, 2))
+test_board1[4][3] = Piece((3, 4))
+test_board1[6][3] = Piece((3, 6))
 
-# def recursive_moves(board, white_turn, turn_ongoing=True):
-#     """
-#     Given a game state and a players turn, return a list
-#     of moves where all sequential moves are counted as a
-#     single move. By default turn_ongoing is true.
-#     Args:
-#     board -> List[Piece, Int]
-#     white_turn -> Bool
-#     turn_ongoing -> Bool
-#     """
-#     # Base case - end of turn
-#     if turn_ongoing == False:
-#         # Get moves given gamestate and turn
-#         moves = get_moves(board, white_turn, None)
-
-#     # Sequential moves must be made
-#     else:
-        
-#         # Get moves given gamestate and turn
-#         moves = get_moves(board, white_turn, capturing_piece)
-
-#         # Get info about the desired move
-#         x, y = moves[selected_piece][0]
-#         new_x, new_y = moves[selected_piece][2][selected_move]
-#         capturing_move = moves[selected_piece][1]
-#         # Move the piece accordingly
-#         piece = board[y][x]
-#         board[new_y][new_x] = piece
-#         board[y][x] = 0
-#         # Update the position, check for promotion to king
-#         piece.update((new_x, new_y))
-#         # If piece made a capture check if any new captures must be made
-#         if capturing_move:
-#             # Remove the captured piece from the board
-#             dx, dy = new_x - x, new_y - y
-#             captured_x, captured_y = x + int(dx / 2), y + int(dy / 2)
-#             board[captured_y][captured_x] = 0
-
-#             # Set it as the capturing_piece to be used as an argument for the potential_moves() function.
-#             capturing_piece = piece
-            
-#             # If piece can still move
-#             if piece.potential_moves(board) != None:
-#                 can_capture, _ = piece.potential_moves(board)
-#                 # If it cannot make any more captures end the turn
-#                 if not can_capture:
-#                     turn_ongoing = False
-#             # If no subsequent captures can be made with the piece end the players turn
-#             else:
-#                 turn_ongoing = False
-#         else:
-#             turn_ongoing = False
-
-def recursive_moves(board, white_turn):
-    """
-    Returns:
-    moves -> List[Tuple(Tuple, Bool, List[Tuple])]
-    """
-    pieces = []
-
-    for row in board:
-        for item in row:
-            if item != 0:
-                # If item is a piece
-                if item.white and white_turn:
-                    pieces.append(item)
-                elif not item.white and not white_turn:
-                    pieces.append(item)
-    
-    # Find all possible moves of any piece
-    for piece in pieces:
-        # Get info about the desired move
-        x, y = moves[selected_piece][0]
-        new_x, new_y = moves[selected_piece][2][selected_move]
-        capturing_move = moves[selected_piece][1]
-        # Move the piece accordingly
-        piece = board[y][x]
-        board[new_y][new_x] = piece
-        board[y][x] = 0
-        # Update the position, check for promotion to king
-        piece.update((new_x, new_y))
+display_board(test_board1)
 
 
 def piece_recursive_moves(board, piece):
     moves = piece.potential_moves(board)
-
+    print(moves)
     # Base case - piece can make no moves or only non-capturing moves
     if moves == None:
         return []
     # Else if only non-capturing moves can be made return these
     elif moves[0] == False:
-        return piece.potential_moves(board)
+        return moves
     # Otherwise simulate capturing move for each possible capture
-    for move in moves:
-        
+    for move in moves[1]:
+        print(move)
+        x, y = piece.x, piece.y
+        new_x, new_y = move
+        # Simulate the move on a copy of the board
+        board_copy = copy.deepcopy(board)
+        board_copy[new_y][new_x] = piece
+        # Update the pieces position
+        piece.update((new_x, new_y))
+        # Remove captured piece
+        dx, dy = new_x - x, new_y - y
+        captured_x, captured_y = x + int(dx / 2), y + int(dy / 2)
+        board[captured_y][captured_x] = 0
+
+        # Recurse
+        return [moves[0], moves[1] + piece_recursive_moves(board, piece)]
 
 
-        return piece_recursive_moves(board, piece)
-        
-    
-    if moves != None:
-        # If no capturing moves can be made
-
-# potential_moves()
-# Returns:
-# Tuple(Bool, List[Tuple(x,y)]) if any moves can be made
-# else None
+piece = test_board1[1][2]
+piece_recursive_moves(test_board1, piece)
