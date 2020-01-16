@@ -19,6 +19,7 @@ class Piece:
         self.x, self.y = pos
         self.white = white
         self.crowned = False
+        self.selected = False
 
     def __repr__(self):
         return f"Piece({(self.x, self.y)}, {self.white})"

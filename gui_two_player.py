@@ -1,7 +1,7 @@
 import sys
 import pygame
 from random import randrange
-import numpy as np
+from numpy import floor
 
 from main import setup_board, get_moves
 import piece
@@ -15,26 +15,43 @@ green = 0, 255, 0
 blue = 0, 0, 255
 grey = 200, 200, 200
 
+
 def draw_board(screen):
+    """
+    Draws a basic checker board pattern on a screen object.
+    Args:
+    screen -> pygame.Surface
+    Returns:
+    None
+    """
     # Draw white background
     screen.fill(white)
-    # Draw the board
-    for j in range(8):
-        for i in range(4):
-            # Every other row should be offset
+    # Overlay black squares onto the background
+    for i in range(4):
+        for j in range(8):
+            # Every other row should be offset by one square
             if j % 2 == 0:
                 offset = int(width / 8)
             else:
                 offset = 0
-
+            # Draw black square in given position
             pygame.draw.rect(
-                screen, grey, (offset + 200 * i, 100 * j, width / 8, height / 8), 0
+                screen, grey, (offset + 200 * i, 100 * j,
+                               int(width / 8), int(height / 8)), 0
             )
 
 
 def draw_pieces(board, screen):
-    # crown_img = pygame.image.load("Assets/crown.png")
-    # pygame.transform.scale(crown_img, (25, 25))
+    """
+    Takes a board object and draws all pieces on a
+    screen object with appropriate colors, positioning,
+    and crowned status.
+    Args:
+    board -> List[List[Piece, Int]]
+    screen -> pygame.Surface
+    Returns:
+    None
+    """
     for row in board:
         for item in row:
             if item != 0:
@@ -50,33 +67,84 @@ def draw_pieces(board, screen):
                 pygame.draw.circle(
                     screen, color, (x_center, y_center), radius
                 )
-                # Draw circle outline
-                pygame.draw.circle(
-                    screen, red, (x_center, y_center), radius, 2
-                )
 
                 if item.crowned:
                     if item.white:
-                        color = black
+                        crown_color = black
                     else:
-                        color = white
-                    
+                        crown_color = white
+
                     pygame.draw.circle(
-                    screen, color, (x_center, y_center), int(radius / 2)
+                        screen, crown_color, (x_center, y_center), int(
+                            radius / 2)
+                    )
+
+                # Draw circle outline in red if not selected else green
+                if item.selected:
+                    outline_color = green
+                else:
+                    outline_color = red
+
+                pygame.draw.circle(
+                    screen, outline_color, (x_center, y_center), radius, 2
                 )
 
-                
-def pos_to_coors(pos):
-    # Convert to a position on the board
-    x, y = int(np.floor(pos[0]/100)), int(np.floor(pos[1]/100))
 
-    return (x, y)
+def pos_to_coors(pos):
+    """
+    Takes a pos tuple containing x and y position on the screen
+    from the top left and returns a tuple indicating the coordinates
+    of that square. Useful for converting from a mouse position.
+    Args:
+    pos -> Tuple(x, y)
+    Returns:
+    Tuple(x, y)
+    """
+    x, y = pos
+    # Convert coordinates to a position on the board
+    x_coord, y_coord = int(floor(x/100)), int(floor(y/100))
+
+    return (x_coord, y_coord)
+
+
+def select_piece(board, moves):
+    # Get user input
+    selected_piece = None
+
+    while selected_piece == None:
+        # Check system events
+        for event in pygame.event.get():
+            # Quit if desired
+            if event.type == pygame.QUIT:
+                game_over = True
+                pygame.quit()
+                sys.exit(0)
+
+            # If mouse is clicked
+            if event.type == pygame.MOUSEBUTTONUP:
+                selected_pos = pos_to_coors(pygame.mouse.get_pos())
+
+                # Check if user selected a valid piece
+                if selected_pos in [move[0] for move in moves]:
+                    # Get index of the piece in moves list
+                    selected_piece = [move[0]
+                                      for move in moves].index(selected_pos)
+                    # Select the piece
+                    x_selected, y_selected = selected_pos
+                    board[y_selected][x_selected].selected = True
+
+    # Once a piece has been selected, return its position in the moves array
+    return selected_piece
+
 
 def main():
+    """
+    Main function to control the game loop for getting player 
+    input, executing moves and displaying the current gamestate.
+    """
+    # Setup the screen
     screen = pygame.display.set_mode(size)
     pygame.display.set_caption("Checkers")
-    font = pygame.font.SysFont("Times New Roman", 45)
-
 
     # A 2d array to store the pieces
     board = [[0 for _ in range(8)] for _ in range(8)]
@@ -91,63 +159,41 @@ def main():
     # Game loop
     game_over = False
     white_turn = True
-
-    # Game loop
     while not game_over:
+        # Check for call to quit
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_over = True
                 pygame.display.quit()
                 pygame.quit()
-                sys.exit()
+                sys.exit(0)
 
         capturing_piece = None
         turn_ongoing = True
         while turn_ongoing:
-            if white_turn:
-                print("White to play")
-            else:
-                print("Black to play")
-
             # Get moves given game state and turn
             moves = get_moves(board, white_turn, capturing_piece)
 
-            selected_piece = None
+            # Get user input
+            selected_piece = select_piece(board, moves)
+
             selected_move = None
-
-            while selected_piece == None:
-                # Check system events 
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        game_over = True
-                        pygame.display.quit()
-                        pygame.quit()
-                        sys.exit()
-
-                    # If mouse is clicked
-                    if event.type == pygame.MOUSEBUTTONUP:
-                        selected_pos = pos_to_coors(pygame.mouse.get_pos())
-                
-                        # Check if user selected a valid piece
-                        if selected_pos in [move[0] for move in moves]:
-                            # Get index of the piece in moves list
-                            selected_piece = [move[0] for move in moves].index(selected_pos)
-            
             while selected_move == None:
-                # Check system events 
+                # Check system events
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         game_over = True
                         pygame.display.quit()
                         pygame.quit()
-                        sys.exit()
+                        sys.exit(0)
 
                     # If mouse is clicked
                     if event.type == pygame.MOUSEBUTTONUP:
                         selected_pos = pos_to_coors(pygame.mouse.get_pos())
                         # If selection is valid
                         if selected_pos in [move for move in moves[selected_piece][2]]:
-                            selected_move = [move for move in moves[selected_piece][2]].index(selected_pos)
+                            selected_move = [
+                                move for move in moves[selected_piece][2]].index(selected_pos)
 
             # Get info about the desired move
             x, y = moves[selected_piece][0]
@@ -169,24 +215,33 @@ def main():
 
                 # Set it as the capturing_piece to be used as an argument for the potential_moves() function.
                 capturing_piece = piece
-            
+
                 # If piece can still move
                 if piece.potential_moves(board) != None:
                     can_capture, _ = piece.potential_moves(board)
-                    # If it cannot make any more captures end the turn
+                    # If it cannot make any more captures unselect it and end the turn
                     if not can_capture:
+                        # Unselect the piece
+                        board[new_y][new_x].selected = False
+                        # End turn
                         turn_ongoing = False
+
                 # If no subsequent captures can be made with the piece end the players turn
                 else:
+                     # Unselect the piece
+                    board[new_y][new_x].selected = False
+                    # End turn
                     turn_ongoing = False
             else:
+                 # Unselect the piece
+                board[new_y][new_x].selected = False
+                # End turn
                 turn_ongoing = False
-            
-            # Display updated position 
+
+            # Display updated position
             draw_board(screen)
             draw_pieces(board, screen)
             pygame.display.update()
-            
 
         white_turn = not white_turn
 
@@ -194,21 +249,19 @@ def main():
         white_exists = False
         black_exists = False
         for row in board:
-            for item in row: 
+            for item in row:
                 if item != 0:
                     if item.white:
                         white_exists = True
                     else:
                         black_exists = True
-        
+
         if not white_exists or not black_exists:
             game_over = True
 
-
-
     pygame.display.quit()
     pygame.quit()
-    sys.exit()
+    sys.exit(0)
 
 
 if __name__ == "__main__":

@@ -14,6 +14,7 @@ green = 0, 255, 0
 blue = 0, 0, 255
 grey = 200, 200, 200
 
+
 def draw_board(screen):
     # Draw white background
     screen.fill(white)
@@ -27,7 +28,8 @@ def draw_board(screen):
                 offset = 0
 
             pygame.draw.rect(
-                screen, grey, (offset + 200 * i, 100 * j, width / 8, height / 8), 0
+                screen, grey, (offset + 200 * i, 100 * j,
+                               width / 8, height / 8), 0
             )
 
 
@@ -57,12 +59,10 @@ def draw_pieces(board, screen):
                 #     screen.blit(crown_img, (x_center, y_center))
 
 
-
 def main():
     screen = pygame.display.set_mode(size)
     pygame.display.set_caption("Checkers")
     font = pygame.font.SysFont("Times New Roman", 45)
-
 
     # A 2d array to store the pieces
     board = [[0 for _ in range(8)] for _ in range(8)]
@@ -83,7 +83,6 @@ def main():
         draw_pieces(board, screen)
         # pygame.time.delay(100)
         pygame.display.update()
-
 
         capturing_piece = None
         turn_ongoing = True
@@ -119,7 +118,7 @@ def main():
 
                 # Set it as the capturing_piece to be used as an argument for the potential_moves() function.
                 capturing_piece = piece
-               
+
                 # If piece can still move
                 if piece.potential_moves(board) != None:
                     can_capture, _ = piece.potential_moves(board)
@@ -144,31 +143,3 @@ if __name__ == "__main__":
     pygame.init()
     pygame.font.init()
     main()
-
-
-# import pygame, sys
-
-# # from pygame.locals import *
-
-
-# def main():
-#     pygame.init()
-
-#     DISPLAY = pygame.display.set_mode((500, 400), 0, 32)
-
-#     WHITE = (255, 255, 255)
-#     BLUE = (0, 0, 255)
-
-#     DISPLAY.fill(WHITE)
-
-#     pygame.draw.rect(DISPLAY, BLUE, (200, 150, 100, 50))
-
-#     while True:
-#         for event in pygame.event.get():
-#             if event.type == pygame.QUIT:
-#                 pygame.quit()
-#                 sys.exit()
-#         pygame.display.update()
-
-
-# main()
