@@ -17,7 +17,6 @@ red = 255, 0, 0
 green = 0, 255, 0
 blue = 0, 0, 255
 grey = 200, 200, 200
-dark_grey = 100, 100, 100
 
 
 def setup_board(board):
@@ -176,34 +175,6 @@ def get_moves(board, white_turn, capturing_piece=None):
     return legal_moves
 
 
-def select_piece(board, moves):
-
-    selected_piece = None
-
-    while selected_piece == None:
-        # Check system events
-        for event in pygame.event.get():
-            # Quit if desired
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit(0)
-
-            # If mouse is clicked
-            if event.type == pygame.MOUSEBUTTONUP:
-                selected_pos = pos_to_coors(pygame.mouse.get_pos())
-
-                # Check if user selected a valid piece
-                if selected_pos in [move[0] for move in moves]:
-                    # Get index of the piece in moves list
-                    selected_piece = [move[0]
-                                      for move in moves].index(selected_pos)
-                    # Select the piece
-                    x_selected, y_selected = selected_pos
-                    board[y_selected][x_selected].selected = True
-
-    # Once a piece has been selected, return its position in the moves array
-    return selected_piece
-
 def check_for_click():
     """
     Checks if the mouse was clicked and if so returns the position of 
@@ -224,7 +195,18 @@ def check_for_click():
             selected_pos = pos_to_coors(pygame.mouse.get_pos())
             return selected_pos
 
-def select_piece_new(board, moves, screen):
+def get_player_input(board, moves, screen):
+    """
+    When called continues looping until a valid input combination
+    is entered (piece and move selection). Also highlights the 
+    possible moves as well as the selected piece.
+    Args:
+    board -> List[List[Piece]]
+    moves -> 
+    screen -> pygame.Surface
+    Returns:
+    (selected_piece, selected_move) -> Tuple(Int, Int)
+    """
     selected_pos = None
     valid_piece_selected = False
 
@@ -307,28 +289,6 @@ def select_piece_new(board, moves, screen):
             valid_piece_selected = False
 
                 
-def select_move(board, moves, selected_piece):
-    selected_move = None
-    while selected_move == None:
-        # Check system events
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit(0)
-
-            # If mouse is clicked
-            if event.type == pygame.MOUSEBUTTONUP:
-                selected_pos = pos_to_coors(pygame.mouse.get_pos())
-                # If selection is valid
-                if selected_pos in [move for move in moves[selected_piece][2]]:
-                    selected_move = [
-                        move for move in moves[selected_piece][2]].index(selected_pos)
-
-    # Once player has selected a valid move return the index
-    # of that move in the list of moves
-    return selected_move
-
-
 def is_game_over(board):
     """
     Function that takes a board object and checks if the game is
@@ -416,11 +376,8 @@ def main():
             # Get moves given game state and turn
             moves = get_moves(board, white_turn, capturing_piece)
 
-            # # Get user input
-            # selected_piece = select_piece(board, moves)
-            # selected_move = select_move(board, moves, selected_piece)
-
-            selected_piece, selected_move = select_piece_new(board, moves, screen)
+            # Get user input
+            selected_piece, selected_move = get_player_input(board, moves, screen)
 
             # Get info about the desired move
             x, y = moves[selected_piece][0]
