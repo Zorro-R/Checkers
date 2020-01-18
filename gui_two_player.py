@@ -8,12 +8,16 @@ from piece import Piece
 
 # Constants
 size = width, height = 800, 800
+cell_width = int(width / 8)
+radius = int(0.35 * cell_width) # Set radius to 35% of cell width
+#Colors
 white = 255, 255, 255
 black = 0, 0, 0
 red = 255, 0, 0
 green = 0, 255, 0
 blue = 0, 0, 255
 grey = 200, 200, 200
+dark_grey = 100, 100, 100
 
 
 def setup_board(board):
@@ -77,8 +81,6 @@ def draw_pieces(board, screen):
                 # Select color
                 color = white if item.white else black
 
-                radius = 35
-
                 x_center, y_center = 50 + 100 * item.x, 50 + 100 * item.y
                 # Draw filled circle
                 pygame.draw.circle(
@@ -94,8 +96,13 @@ def draw_pieces(board, screen):
                             radius / 2)
                     )
 
-                # Draw circle outline in red if not selected else green
-                outline_color = green if item.selected else red
+                # Draw circle outline in green if the piece is selected 
+                if item.selected:
+                    outline_color = green
+                elif item.white:
+                    outline_color = black
+                else:
+                    outline_color = white
 
                 pygame.draw.circle(
                     screen, outline_color, (x_center, y_center), radius, 2
@@ -197,7 +204,109 @@ def select_piece(board, moves):
     # Once a piece has been selected, return its position in the moves array
     return selected_piece
 
+def check_for_click():
+    """
+    Checks if the mouse was clicked and if so returns the position of 
+    the mouse click in a tuple
+    Returns:
+    selected_pos -> Tuple(x, y) if mouse is clicked
+    else None
+    """
+    # Check system events
+    for event in pygame.event.get():
+        # Quit if desired
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit(0)
 
+        # If mouse is clicked
+        if event.type == pygame.MOUSEBUTTONUP:
+            selected_pos = pos_to_coors(pygame.mouse.get_pos())
+            return selected_pos
+
+def select_piece_new(board, moves, screen):
+    selected_pos = None
+    valid_piece_selected = False
+
+    while not valid_piece_selected:
+
+        # Check for mouse click
+        while selected_pos == None:
+            selected_pos = check_for_click()
+
+        # If a field is clicked check if it is valid (i.e a movable piece is on it)
+        selectable_piece_positions = [move[0] for move in moves]
+        # Check if user selected a valid piece
+        if selected_pos in selectable_piece_positions:
+            valid_piece_selected = True
+
+            x_selected, y_selected = selected_pos
+
+            # Select the piece and highlight it
+            board[y_selected][x_selected].selected = True
+            # Update the screen with user selection
+            draw_board(screen)
+            draw_pieces(board, screen)
+            pygame.display.update()
+            # Get index of the piece in moves list
+            selected_piece = selectable_piece_positions.index(selected_pos)
+            # Get possible moves for that piece and highlight them
+            possible_moves = moves[selected_piece][2]
+            can_capture = moves[selected_piece][1]
+            # Highlight the possible moves or captures on the board
+            for move in possible_moves:
+                x, y = move
+                # Calculate center
+                x_center = x * cell_width + int(cell_width / 2)
+                y_center = y * cell_width + int(cell_width / 2)
+                # Set color based on whether or not the selected piece can capture and highlight possible moves
+                outline_color = red if can_capture else blue
+                # Draw circle
+                pygame.draw.circle(screen, outline_color, (x_center, y_center), radius, 2)
+
+            # Update the screen
+            pygame.display.update()
+        else:
+            valid_piece_selected = False
+    
+
+    valid_move_selected = False
+    new_selection = False
+    # If a valid piece is selected and no valid move has been chosen
+    while not valid_move_selected and not new_selection:
+        
+        # Check for mouse click
+        selected_pos = None
+        while selected_pos == None:
+            selected_pos = check_for_click()
+        
+        # Check if user has made a proper move and if so return the selection
+        moves_for_selected_piece = [move for move in moves[selected_piece][2]]
+        if selected_pos in moves_for_selected_piece:
+            selected_move = moves_for_selected_piece.index(selected_pos)
+            valid_move_selected = True
+            # Return selection
+            return (selected_piece, selected_move)
+
+        # If user has clicked same piece twice ask loop back to input about 
+        # the desired move - note: x_selected and y_selected refer to the original
+        # x and y clicked
+        elif selected_pos == (x_selected, y_selected):
+            valid_move_selected = False
+
+        # Otherwise unhighlight selection and check if user has selected another field
+        else:
+            # unselect original piece and draw board again to unhighlight moves
+            board[y_selected][x_selected].selected = False
+            draw_board(screen)
+            draw_pieces(board, screen)
+            pygame.display.update()
+
+            # Assume new selection is invalid
+            new_selection = True
+            valid_piece_selected = False
+
+                
 def select_move(board, moves, selected_piece):
     selected_move = None
     while selected_move == None:
@@ -257,7 +366,7 @@ def is_game_over(board):
 
     # Return updated gamestate values
     return (game_over, game_tied, white_wins)
-
+    
 
 def main():
     """
@@ -306,11 +415,12 @@ def main():
         while turn_ongoing and not game_over and not game_tied:
             # Get moves given game state and turn
             moves = get_moves(board, white_turn, capturing_piece)
-            # Check
 
-            # Get user input
-            selected_piece = select_piece(board, moves)
-            selected_move = select_move(board, moves, selected_piece)
+            # # Get user input
+            # selected_piece = select_piece(board, moves)
+            # selected_move = select_move(board, moves, selected_piece)
+
+            selected_piece, selected_move = select_piece_new(board, moves, screen)
 
             # Get info about the desired move
             x, y = moves[selected_piece][0]
